@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+
+# Environment — NEVER commit this
+.env.local
+.env
+
+# Build
+dist/
+build/
+
+# Misc
+.DS_Store
+*.log
