@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Open Slot
 
 Last-minute appointment deals from vetted local businesses.
@@ -135,3 +136,7 @@ npm run dev
 ---
 
 Built with Next.js · Supabase · Resend · Deployed on Vercel
+=======
+# openslot
+Open Availability of Now
+>>>>>>> bbe37621aa44203d7c9ea928a64d970fb5077b12
