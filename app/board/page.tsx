@@ -77,12 +77,7 @@ export default function BoardPage() {
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
               {slots.length} live · Williamstown, NJ
             </div>
-            <button
-  onClick={fetchSlots}
-  className="text-xs text-gray-400 hover:text-gray-600 underline"
->
-  Refresh
-</button>
+            <button onClick={fetchSlots} className="text-xs text-gray-400 hover:text-gray-600 underline">Refresh</button>
           </div>
           <p className="text-sm text-gray-500">From vetted local businesses. Updated in real time.</p>
         </div>
