@@ -21,11 +21,13 @@ export async function POST(req: NextRequest) {
   })
 
   // Notify all approved businesses in the matching category
-  const { data: businesses } = await supabase
-    .from('businesses')
-    .select('name, email, post_token')
-    .eq('status', 'approved')
-    .eq('category', category)
+const { data: businesses } = await supabase
+  .from('businesses')
+  .select('name, email, post_token')
+  .eq('status', 'approved')
+  .ilike('category', category)  // ← ilike instead of eq (case-insensitive)
+  console.log('Need posted for category:', category)
+console.log('Matching businesses found:', businesses?.length ?? 0)
 
   if (businesses && businesses.length > 0) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
