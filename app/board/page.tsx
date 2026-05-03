@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import SlotCard from '@/components/SlotCard'
 import { Slot } from '@/lib/types'
