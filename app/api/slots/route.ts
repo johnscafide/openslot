@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   if (!business) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Build slot datetime
-  const slotTime = new Date(`${slot_date}T${slot_time}`)
+  const slotTime = new Date(`${slot_date}T${slot_time}:00`)
   if (isNaN(slotTime.getTime())) {
     return NextResponse.json({ error: 'Invalid date/time' }, { status: 400 })
   }
