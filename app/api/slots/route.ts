@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 
+function isDST(date: Date): boolean {
+  const jan = new Date(date.getFullYear(), 0, 1).getTimezoneOffset()
+  const jul = new Date(date.getFullYear(), 6, 1).getTimezoneOffset()
+  return Math.min(jan, jul) === date.getTimezoneOffset()
+}
+
 // GET /api/slots?token=xxx — verify business token for posting page
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
@@ -39,8 +45,10 @@ export async function POST(req: NextRequest) {
 
   if (!business) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Build slot datetime
-  const slotTime = new Date(`${slot_date}T${slot_time}:00`)
+ // Interpret entered time as Eastern Time (EDT = UTC-4, EST = UTC-5)
+// Auto-detect based on time of year
+const easternOffset = isDST(new Date()) ? '-04:00' : '-05:00'
+const slotTime = new Date(`${slot_date}T${slot_time}:00${easternOffset}`)
   if (isNaN(slotTime.getTime())) {
     return NextResponse.json({ error: 'Invalid date/time' }, { status: 400 })
   }

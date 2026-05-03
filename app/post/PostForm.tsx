@@ -106,7 +106,8 @@ export default function PostForm() {
                   <input name="slot_date" type="date" required className="input" defaultValue={new Date().toISOString().split('T')[0]} />
                 </div>
                 <div>
-                  <label className="label">Time</label>
+                  <label className="label">Time (Eastern Time)</label>
+                  <p className="text-xs text-gray-400 mb-1.5">All times are in Eastern Time (ET)</p>
                   <input name="slot_time" type="time" required className="input" />
                 </div>
               </div>

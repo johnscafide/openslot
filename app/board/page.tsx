@@ -25,12 +25,11 @@ export default function BoardPage() {
   }, [])
 
   async function fetchSlots() {
-    const { data } = await supabase
-      .from('active_slots')
-      .select('*')
-    if (data) setSlots(data as Slot[])
-    setLoading(false)
-  }
+  const res = await fetch('/api/slots/active')
+  const data = await res.json()
+  if (data.slots) setSlots(data.slots as Slot[])
+  setLoading(false)
+}
 
   const filtered = activeCategory === 'All'
     ? slots
