@@ -28,6 +28,7 @@ export interface Slot {
   // joined from businesses
   business_name?: string
   business_category?: string
+  business_address?: string
 }
 
 export interface Claim {
