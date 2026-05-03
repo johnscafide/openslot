@@ -72,12 +72,12 @@ export default function BoardPage() {
         {/* Header */}
         <div className="py-8">
           <div className="flex items-center justify-between mb-2">
+            <button onClick={fetchSlots} className="text-xs text-gray-400 hover:text-gray-600 underline">Refresh</button>
             <h1 className="text-2xl font-bold text-gray-900">Open slots near you</h1>
             <div className="flex items-center gap-2 text-xs text-emerald-600 font-medium bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
               {slots.length} live · Williamstown, NJ
             </div>
-            <button onClick={fetchSlots} className="text-xs text-gray-400 hover:text-gray-600 underline">Refresh</button>
           </div>
           <p className="text-sm text-gray-500">From vetted local businesses. Updated in real time.</p>
         </div>
