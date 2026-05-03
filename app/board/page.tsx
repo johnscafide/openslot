@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import SlotCard from '@/components/SlotCard'
@@ -16,20 +16,41 @@ export default function BoardPage() {
   const [claimingId, setClaimingId] = useState<string | null>(null)
   const [needForm, setNeedForm] = useState(false)
   const [needSubmitted, setNeedSubmitted] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
+  const fetchSlots = useCallback(async () => {
+    try {
+      const res = await fetch('/api/slots/active', {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' },
+      })
+      const data = await res.json()
+      if (data.slots) {
+        setSlots(data.slots as Slot[])
+        setLastUpdated(new Date())
+      }
+    } catch (e) {
+      console.error('Failed to fetch slots:', e)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     fetchSlots()
-    // Re-fetch every 10 seconds so the board stays fresh
-    const interval = setInterval(fetchSlots, 10000)
-    return () => clearInterval(interval)
-  }, [])
 
-  async function fetchSlots() {
-  const res = await fetch('/api/slots/active', { cache: 'no-store' })
-  const data = await res.json()
-  if (data.slots) setSlots(data.slots as Slot[])
-  setLoading(false)
-}
+    // Real-time: re-fetch whenever any slot changes
+    const channel = supabase
+      .channel('slots-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'slots' },
+        () => { fetchSlots() }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [fetchSlots])
 
   const filtered = activeCategory === 'All'
     ? slots
@@ -69,20 +90,30 @@ export default function BoardPage() {
       <Nav />
       <main className="max-w-5xl mx-auto px-4 pb-16">
 
-        {/* Header */}
         <div className="py-8">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-2xl font-bold text-gray-900">Open slots near you</h1>
-            <div className="flex items-center gap-2 text-xs text-emerald-600 font-medium bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-              {slots.length} live · Williamstown, NJ
-              <button onClick={fetchSlots} className="text-xs text-gray-400 hover:text-gray-600 underline">Refresh</button>
+            <div className="flex items-center gap-3">
+              {lastUpdated && (
+                <span className="text-xs text-gray-400">
+                  Updated {lastUpdated.toLocaleTimeString()}
+                </span>
+              )}
+              <button
+                onClick={fetchSlots}
+                className="text-xs text-emerald-600 border border-emerald-200 bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors"
+              >
+                Refresh
+              </button>
+              <div className="flex items-center gap-2 text-xs text-emerald-600 font-medium bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                {slots.length} live · Williamstown, NJ
+              </div>
             </div>
           </div>
           <p className="text-sm text-gray-500">From vetted local businesses. Updated in real time.</p>
         </div>
 
-        {/* Category filter */}
         <div className="flex gap-2 flex-wrap mb-6">
           {CATEGORIES.map(cat => (
             <button
@@ -100,7 +131,6 @@ export default function BoardPage() {
           ))}
         </div>
 
-        {/* Slot grid */}
         {loading ? (
           <div className="text-center py-16 text-gray-400">Loading slots...</div>
         ) : filtered.length === 0 ? (
@@ -122,7 +152,6 @@ export default function BoardPage() {
           </div>
         )}
 
-        {/* "I Need" section */}
         <div className="border-t border-gray-100 pt-10">
           <div className="flex items-center justify-between mb-4">
             <div>
