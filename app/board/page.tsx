@@ -35,21 +35,11 @@ export default function BoardPage() {
     }
   }, [])
 
-  useEffect(() => {
-    fetchSlots()
-
-    // Real-time: re-fetch whenever any slot changes
-    const channel = supabase
-      .channel('slots-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'slots' },
-        () => { fetchSlots() }
-      )
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [fetchSlots])
+useEffect(() => {
+  fetchSlots()
+  const interval = setInterval(fetchSlots, 10000)
+  return () => clearInterval(interval)
+}, [fetchSlots])
 
   const filtered = activeCategory === 'All'
     ? slots
