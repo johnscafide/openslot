@@ -48,10 +48,10 @@ export default function SlotCard({ slot, onClaim, claimed, loading }: Props) {
     discountPct >= 40 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'
 
   function handleClaim() {
-    const email = prompt('Enter your email to claim this slot:')
-    if (!email || !email.includes('@')) return
-    onClaim(slot.id, email)
-  }
+  const email = prompt('Enter your email to claim this slot:')
+  if (!email || !email.includes('@')) return
+  onClaim(slot.id, email)
+}
 
   return (
     <div className="relative bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">

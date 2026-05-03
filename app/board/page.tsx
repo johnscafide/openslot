@@ -46,21 +46,20 @@ useEffect(() => {
     : slots.filter(s => s.business_category === activeCategory)
 
   async function handleClaim(slotId: string, email: string) {
-    setClaimingId(slotId)
-    const res = await fetch('/api/claim', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slotId, consumerEmail: email }),
-    })
-    if (res.ok) {
-      setClaimedIds(prev => [...prev, slotId])
-      fetchSlots()
-    } else {
-      alert('Sorry, that slot may have just been claimed. Refreshing...')
-      fetchSlots()
-    }
-    setClaimingId(null)
+  setClaimingId(slotId)
+  const res = await fetch('/api/claim', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slotId, consumerEmail: email }),
+  })
+  const data = await res.json()
+  if (data.checkoutUrl) {
+    window.location.href = data.checkoutUrl // redirect to Stripe
+  } else {
+    alert('Something went wrong. Please try again.')
   }
+  setClaimingId(null)
+}
 
   async function handleNeedSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()

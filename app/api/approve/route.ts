@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       <p><strong>${app.business_name}</strong> has been approved on Open Slot!</p>
       <p>Bookmark this link — it's all you need to post open slots:</p>
       <p><a href="${postUrl}">${postUrl}</a></p>
+      <p>View your dashboard anytime: <a href="${baseUrl}/my-slots?token=${business.post_token}">${baseUrl}/my-slots?token=${business.post_token}</a></p>
       <p>Takes 60 seconds to post. You'll get an email the moment someone claims a slot.</p>
       <p>— Open Slot</p>
     `,
