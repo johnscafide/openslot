@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const supabase = getSupabaseAdmin()
   const { data, error } = await supabase
@@ -12,5 +14,6 @@ export async function GET() {
     return NextResponse.json({ slots: [] })
   }
 
-  return NextResponse.json({ slots: data || [] })
+  return NextResponse.json({ slots: data || [] }, { headers: { 'Cache-Control': 'no-store' } })
+
 }

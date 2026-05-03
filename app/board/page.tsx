@@ -25,7 +25,7 @@ export default function BoardPage() {
   }, [])
 
   async function fetchSlots() {
-  const res = await fetch('/api/slots/active')
+  const res = await fetch('/api/slots/active', { cache: 'no-store' })
   const data = await res.json()
   if (data.slots) setSlots(data.slots as Slot[])
   setLoading(false)
