@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
-const FROM = 'Open Slot <openslot@aephauesti.resend.app>'
+const FROM = 'Open Slot <openslot@resend.dev>'
 
 // 1. Business: your slot was claimed
 export async function sendSlotClaimedEmail(opts: {
