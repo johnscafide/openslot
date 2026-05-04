@@ -6,6 +6,12 @@ import clsx from 'clsx'
 
 const CATEGORIES = ['All', 'Salon & barber', 'Fitness', 'Golf', 'Spa', 'Dining', 'Services']
 
+const searchParams = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search)
+  : null
+const sharedSlotId = searchParams?.get('slot')
+const referralCode = searchParams?.get('ref')
+
 const MOCK_COORDS: Record<string, [number, number]> = {
   'Williamstown':      [39.6854, -74.9993],
   'Sicklerville':      [39.7251, -74.9882],
@@ -39,6 +45,37 @@ function formatExpiry(mins: number) {
   if (mins < 60) return `${mins}m left`
   const h = Math.floor(mins / 60), m = mins % 60
   return m === 0 ? `${h}h left` : `${h}h ${m}m`
+}
+
+async function handleClaim(slotId: string) {
+  const email = prompt('Enter your email to claim this slot:')
+  if (!email || !email.includes('@')) return
+  setClaimingId(slotId)
+
+  // Apply referral if present
+  if (referralCode) {
+    await fetch('/api/referral', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referralCode, referredEmail: email, slotId }),
+    }).catch(() => {}) // silent — don't block claim if referral fails
+  }
+
+  const res = await fetch('/api/claim', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slotId, consumerEmail: email }),
+  })
+  const data = await res.json()
+  if (data.checkoutUrl) {
+    window.location.href = data.checkoutUrl
+  } else if (data.success || res.ok) {
+    setClaimedIds(prev => [...prev, slotId])
+    fetchSlots()
+  } else {
+    alert('Something went wrong. Please try again.')
+  }
+  setClaimingId(null)
 }
 
 // Stable mock ratings per business name
@@ -506,6 +543,22 @@ export default function BoardPage() {
                               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                             </svg>
                           </button>
+                          {/* Share button */}
+<button
+  className="heart-btn"
+  title="Share this deal"
+  onClick={() => {
+    const url = `${window.location.origin}/board?slot=${slot.id}`
+    navigator.clipboard.writeText(url)
+    alert('Link copied! Share it with friends.')
+  }}
+>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+  </svg>
+</button>
 
                           {/* Claim */}
                           <button
