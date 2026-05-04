@@ -6,17 +6,11 @@ import clsx from 'clsx'
 
 const CATEGORIES = ['All', 'Salon & barber', 'Fitness', 'Golf', 'Spa', 'Dining', 'Services']
 
-const searchParams = typeof window !== 'undefined'
-  ? new URLSearchParams(window.location.search)
-  : null
-const sharedSlotId = searchParams?.get('slot')
-const referralCode = searchParams?.get('ref')
-
 const MOCK_COORDS: Record<string, [number, number]> = {
-  'Williamstown':      [39.6854, -74.9993],
-  'Sicklerville':      [39.7251, -74.9882],
-  'Glassboro':         [39.7026, -75.1116],
-  'Turnersville':      [39.7651, -75.0552],
+  'Williamstown':        [39.6854, -74.9993],
+  'Sicklerville':        [39.7251, -74.9882],
+  'Glassboro':           [39.7026, -75.1116],
+  'Turnersville':        [39.7651, -75.0552],
   'Washington Township': [39.6887, -75.0552],
 }
 
@@ -28,12 +22,15 @@ function getBizCoords(address: string): [number, number] {
 function formatTime(iso: string) {
   const d = new Date(iso)
   const today = new Date()
-  const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1)
+  const tomorrow = new Date()
+  tomorrow.setDate(today.getDate() + 1)
   const isToday = d.toDateString() === today.toDateString()
   const isTomorrow = d.toDateString() === tomorrow.toDateString()
   const label = isToday ? 'Today' : isTomorrow ? 'Tomorrow'
     : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })
+  const time = d.toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York',
+  })
   return `${label} · ${time}`
 }
 
@@ -47,38 +44,6 @@ function formatExpiry(mins: number) {
   return m === 0 ? `${h}h left` : `${h}h ${m}m`
 }
 
-async function handleClaim(slotId: string) {
-  const email = prompt('Enter your email to claim this slot:')
-  if (!email || !email.includes('@')) return
-  setClaimingId(slotId)
-
-  // Apply referral if present
-  if (referralCode) {
-    await fetch('/api/referral', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referralCode, referredEmail: email, slotId }),
-    }).catch(() => {}) // silent — don't block claim if referral fails
-  }
-
-  const res = await fetch('/api/claim', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ slotId, consumerEmail: email }),
-  })
-  const data = await res.json()
-  if (data.checkoutUrl) {
-    window.location.href = data.checkoutUrl
-  } else if (data.success || res.ok) {
-    setClaimedIds(prev => [...prev, slotId])
-    fetchSlots()
-  } else {
-    alert('Something went wrong. Please try again.')
-  }
-  setClaimingId(null)
-}
-
-// Stable mock ratings per business name
 function getRating(name: string) {
   const ratings: Record<string, { score: number; count: number }> = {
     "Mario's Barbershop":     { score: 4.9, count: 312 },
@@ -87,15 +52,16 @@ function getRating(name: string) {
     "Serenity Spa & Wellness": { score: 4.8, count: 203 },
     "The Rusty Fork":          { score: 4.8, count: 512 },
   }
-  return ratings[name] || { score: 4.5, count: Math.floor(Math.random() * 200) + 50 }
+  return ratings[name] || { score: 4.5, count: 89 }
 }
 
 function Stars({ score }: { score: number }) {
   return (
     <div style={{ display: 'flex', gap: 1 }}>
-      {[1,2,3,4,5].map(i => (
+      {[1, 2, 3, 4, 5].map(i => (
         <svg key={i} width="11" height="11" viewBox="0 0 12 12" fill="none">
-          <path d="M6 1l1.27 2.57 2.83.41-2.05 2 .48 2.83L6 7.5 3.47 8.81l.48-2.83-2.05-2 2.83-.41z"
+          <path
+            d="M6 1l1.27 2.57 2.83.41-2.05 2 .48 2.83L6 7.5 3.47 8.81l.48-2.83-2.05-2 2.83-.41z"
             fill={i <= Math.round(score) ? '#F59E0B' : '#E5E7EB'}
             stroke={i <= Math.round(score) ? '#F59E0B' : '#E5E7EB'}
             strokeWidth="0.5"
@@ -106,13 +72,11 @@ function Stars({ score }: { score: number }) {
   )
 }
 
-// Simple SVG map
 function MiniMap({ slots, hoveredId, onHover }: {
   slots: Slot[]
   hoveredId: string | null
   onHover: (id: string | null) => void
 }) {
-  // NJ bounding box approx: lat 39.6-39.8, lng -75.2 to -74.9
   const minLat = 39.62, maxLat = 39.78, minLng = -75.18, maxLng = -74.95
   const W = 340, H = 220
 
@@ -122,12 +86,12 @@ function MiniMap({ slots, hoveredId, onHover }: {
     return [x, y]
   }
 
-  // Group slots by business to avoid stacking pins
   const seen = new Set<string>()
   const pins = slots.filter(s => {
     const key = s.business_name || ''
     if (seen.has(key)) return false
-    seen.add(key); return true
+    seen.add(key)
+    return true
   }).map(s => {
     const coords = getBizCoords(s.business_address || '')
     const [x, y] = project(coords[0], coords[1])
@@ -135,60 +99,43 @@ function MiniMap({ slots, hoveredId, onHover }: {
   })
 
   return (
-    <div style={{
-      background: '#f0f4f8',
-      borderRadius: 12,
-      overflow: 'hidden',
-      border: '1px solid #e2e8f0',
-      position: 'relative',
-    }}>
+    <div style={{ background: '#f0f4f8', borderRadius: 12, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
       <div style={{ padding: '10px 14px', background: '#fff', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>South Jersey</span>
         <span style={{ fontSize: 11, color: '#9ca3af' }}>{slots.length} open slots</span>
       </div>
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
-        {/* Background */}
         <rect width={W} height={H} fill="#e8f0e9" />
-        {/* Simple road lines */}
         <line x1="0" y1="110" x2={W} y2="110" stroke="#d1d5db" strokeWidth="1.5" />
         <line x1="170" y1="0" x2="170" y2={H} stroke="#d1d5db" strokeWidth="1.5" />
         <line x1="0" y1="60" x2={W} y2="160" stroke="#d1d5db" strokeWidth="1" strokeDasharray="4,4" />
-        {/* Pins */}
         {pins.map(pin => {
           const disc = Math.round((pin.original_price - pin.deal_price) / pin.original_price * 100)
           const isHovered = hoveredId === pin.id
           return (
-            <g key={pin.id}
-              style={{ cursor: 'pointer' }}
+            <g key={pin.id} style={{ cursor: 'pointer' }}
               onMouseEnter={() => onHover(pin.id)}
               onMouseLeave={() => onHover(null)}
             >
-              {/* Shadow */}
               <ellipse cx={pin.x} cy={pin.y + 16} rx={8} ry={3} fill="rgba(0,0,0,0.12)" />
-              {/* Pin */}
               <circle cx={pin.x} cy={pin.y} r={isHovered ? 18 : 14}
                 fill={isHovered ? '#059669' : '#10b981'}
-                stroke="#fff"
-                strokeWidth={isHovered ? 2.5 : 2}
+                stroke="#fff" strokeWidth={isHovered ? 2.5 : 2}
                 style={{ transition: 'all 0.15s' }}
               />
               <text x={pin.x} y={pin.y + 1}
                 textAnchor="middle" dominantBaseline="middle"
-                fill="white" fontSize={isHovered ? 9 : 8} fontWeight="700"
-                fontFamily="system-ui"
+                fill="white" fontSize={isHovered ? 9 : 8} fontWeight="700" fontFamily="system-ui"
               >
                 {disc}%
               </text>
-              {/* Tooltip on hover */}
               {isHovered && (
                 <g>
-                  <rect x={pin.x - 50} y={pin.y - 42} width="100" height="22" rx="4"
-                    fill="#111827" opacity="0.92" />
+                  <rect x={pin.x - 50} y={pin.y - 42} width="100" height="22" rx="4" fill="#111827" opacity="0.92" />
                   <text x={pin.x} y={pin.y - 27}
-                    textAnchor="middle" fill="white"
-                    fontSize="9" fontFamily="system-ui" fontWeight="500"
+                    textAnchor="middle" fill="white" fontSize="9" fontFamily="system-ui" fontWeight="500"
                   >
-                    {pin.business_name?.split(' ').slice(0,3).join(' ')}
+                    {pin.business_name?.split(' ').slice(0, 3).join(' ')}
                   </text>
                 </g>
               )}
@@ -217,14 +164,28 @@ export default function BoardPage() {
   const [sortBy, setSortBy] = useState<'time' | 'discount' | 'price'>('time')
   const [needForm, setNeedForm] = useState(false)
   const [needSubmitted, setNeedSubmitted] = useState(false)
+  const [copyMsg, setCopyMsg] = useState<string | null>(null)
+
+  // Referral + shared slot from URL (client-side only)
+  const [referralCode, setReferralCode] = useState<string | null>(null)
+  const [sharedSlotId, setSharedSlotId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setReferralCode(params.get('ref'))
+    setSharedSlotId(params.get('slot'))
+  }, [])
 
   const fetchSlots = useCallback(async () => {
     try {
       const res = await fetch('/api/slots/active', { cache: 'no-store' })
       const data = await res.json()
       if (data.slots) setSlots(data.slots as Slot[])
-    } catch (e) { console.error(e) }
-    finally { setLoading(false) }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -233,20 +194,49 @@ export default function BoardPage() {
     return () => clearInterval(iv)
   }, [fetchSlots])
 
+  // Scroll to shared slot
+  useEffect(() => {
+    if (sharedSlotId && !loading) {
+      setTimeout(() => {
+        const el = document.getElementById(`slot-${sharedSlotId}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 300)
+    }
+  }, [sharedSlotId, loading])
+
   const toggleSave = (id: string) => {
     setSavedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  const shareSlot = (slotId: string) => {
+    const url = `${window.location.origin}/board?slot=${slotId}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopyMsg(slotId)
+      setTimeout(() => setCopyMsg(null), 2000)
+    })
   }
 
   async function handleClaim(slotId: string) {
     const email = prompt('Enter your email to claim this slot:')
     if (!email || !email.includes('@')) return
     setClaimingId(slotId)
+
+    // Apply referral silently if present
+    if (referralCode) {
+      await fetch('/api/referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referralCode, referredEmail: email, slotId }),
+      }).catch(() => {})
+    }
+
     const res = await fetch('/api/claim', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ slotId, consumerEmail: email }),
     })
     const data = await res.json()
+
     if (data.checkoutUrl) {
       window.location.href = data.checkoutUrl
     } else if (data.success || res.ok) {
@@ -295,15 +285,16 @@ export default function BoardPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
         * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
-        .slot-row { display: flex; gap: 0; border-bottom: 1px solid #f3f4f6; transition: background 0.1s; cursor: pointer; }
+        .slot-row { display: flex; gap: 0; border-bottom: 1px solid #f3f4f6; transition: background 0.1s; }
         .slot-row:hover { background: #fafafa; }
         .slot-row.hovered { background: #f0fdf4; }
-        .heart-btn { background: none; border: none; cursor: pointer; padding: 6px; border-radius: 50%; transition: background 0.15s; display: flex; align-items: center; justify-content: center; }
-        .heart-btn:hover { background: #fee2e2; }
+        .slot-row.shared-highlight { background: #fffbeb; border-left: 3px solid #f59e0b; }
+        .icon-btn { background: none; border: none; cursor: pointer; padding: 6px; border-radius: 50%; transition: background 0.15s; display: flex; align-items: center; justify-content: center; }
+        .icon-btn:hover { background: #f3f4f6; }
         .claim-btn { padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
         .claim-btn-active { background: #10b981; color: white; }
         .claim-btn-active:hover { background: #059669; transform: translateY(-1px); }
-        .claim-btn-claimed { background: #d1fae5; color: #065f46; }
+        .claim-btn-claimed { background: #d1fae5; color: #065f46; cursor: default; }
         .filter-label { font-size: 11px; font-weight: 600; color: #6b7280; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; display: block; }
         .range-input { width: 100%; accent-color: #10b981; }
         .cat-chip { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid #e5e7eb; background: white; color: #6b7280; transition: all 0.12s; white-space: nowrap; }
@@ -311,16 +302,25 @@ export default function BoardPage() {
         .cat-chip:hover:not(.active) { border-color: #10b981; color: #10b981; }
         .sort-btn { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid #e5e7eb; background: white; color: #6b7280; transition: all 0.12s; }
         .sort-btn.active { background: #111827; border-color: #111827; color: white; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
       `}</style>
 
       <Nav />
+
+      {/* Referral banner if someone arrived via ref link */}
+      {referralCode && (
+        <div style={{ background: '#f0fdf4', borderBottom: '1px solid #a7f3d0', padding: '10px 24px', textAlign: 'center' }}>
+          <span style={{ fontSize: 13, color: '#065f46', fontWeight: 500 }}>
+            🎁 You were referred! Claim a slot and both you and your friend get $5 credit.
+          </span>
+        </div>
+      )}
 
       <div style={{ display: 'flex', maxWidth: 1200, margin: '0 auto', padding: '0 16px', gap: 24, paddingTop: 24, paddingBottom: 40 }}>
 
         {/* LEFT SIDEBAR */}
         <aside style={{ width: 260, flexShrink: 0, position: 'sticky', top: 72, height: 'fit-content' }}>
 
-          {/* Live indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', animation: 'pulse 2s infinite' }} />
             <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{filtered.length} open slots</span>
@@ -337,8 +337,7 @@ export default function BoardPage() {
             <span className="filter-label">Category</span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
+                <button key={cat}
                   className={clsx('cat-chip', activeCategory === cat && 'active')}
                   onClick={() => setActiveCategory(cat)}
                 >
@@ -357,7 +356,8 @@ export default function BoardPage() {
             </div>
             <input type="range" min={5} max={200} value={maxPrice}
               onChange={e => setMaxPrice(parseInt(e.target.value))}
-              className="range-input" />
+              className="range-input"
+            />
           </div>
 
           {/* Min discount */}
@@ -369,7 +369,8 @@ export default function BoardPage() {
             </div>
             <input type="range" min={0} max={70} step={5} value={minDiscount}
               onChange={e => setMinDiscount(parseInt(e.target.value))}
-              className="range-input" />
+              className="range-input"
+            />
           </div>
 
           {/* Saved toggle */}
@@ -384,7 +385,8 @@ export default function BoardPage() {
               }}
             >
               <div style={{
-                position: 'absolute', top: 3, left: showSavedOnly ? 21 : 3,
+                position: 'absolute', top: 3,
+                left: showSavedOnly ? 21 : 3,
                 width: 16, height: 16, borderRadius: '50%', background: 'white',
                 transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
               }} />
@@ -417,8 +419,10 @@ export default function BoardPage() {
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#9ca3af', marginRight: 4 }}>Sort:</span>
               {(['time', 'discount', 'price'] as const).map(s => (
-                <button key={s} className={clsx('sort-btn', sortBy === s && 'active')}
-                  onClick={() => setSortBy(s)}>
+                <button key={s}
+                  className={clsx('sort-btn', sortBy === s && 'active')}
+                  onClick={() => setSortBy(s)}
+                >
                   {s === 'time' ? 'Soonest' : s === 'discount' ? 'Best deal' : 'Lowest price'}
                 </button>
               ))}
@@ -441,12 +445,18 @@ export default function BoardPage() {
                 const isUrgent = mins < 90 || slot.spots_remaining === 1
                 const isSaved = savedIds.includes(slot.id)
                 const isClaimed = claimedIds.includes(slot.id)
+                const isShared = sharedSlotId === slot.id
                 const rating = getRating(slot.business_name || '')
 
                 return (
                   <div
                     key={slot.id}
-                    className={clsx('slot-row', hoveredId === slot.id && 'hovered')}
+                    id={`slot-${slot.id}`}
+                    className={clsx(
+                      'slot-row',
+                      hoveredId === slot.id && 'hovered',
+                      isShared && 'shared-highlight'
+                    )}
                     onMouseEnter={() => setHoveredId(slot.id)}
                     onMouseLeave={() => setHoveredId(null)}
                     style={{ borderTop: idx === 0 ? 'none' : undefined }}
@@ -454,17 +464,16 @@ export default function BoardPage() {
                     {/* Urgency stripe */}
                     <div style={{
                       width: 4, flexShrink: 0,
-                      background: isUrgent ? '#ef4444' : disc >= 45 ? '#f59e0b' : '#10b981'
+                      background: isUrgent ? '#ef4444' : disc >= 45 ? '#f59e0b' : '#10b981',
                     }} />
 
-                    {/* Content */}
                     <div style={{ flex: 1, padding: '16px 18px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
 
-                      {/* Category icon area */}
+                      {/* Category icon */}
                       <div style={{
                         width: 44, height: 44, borderRadius: 10, flexShrink: 0,
-                        background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 20,
+                        background: '#f0fdf4', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', fontSize: 20,
                       }}>
                         {slot.business_category === 'Salon & barber' ? '✂️'
                           : slot.business_category === 'Fitness' ? '🏃'
@@ -485,6 +494,11 @@ export default function BoardPage() {
                               HOT
                             </span>
                           )}
+                          {isShared && (
+                            <span style={{ fontSize: 10, fontWeight: 700, background: '#fef3c7', color: '#d97706', padding: '2px 7px', borderRadius: 20, flexShrink: 0, marginTop: 1 }}>
+                              SHARED WITH YOU
+                            </span>
+                          )}
                         </div>
                         <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 6 }}>{slot.service_name}</div>
 
@@ -496,9 +510,11 @@ export default function BoardPage() {
                         </div>
 
                         {/* Meta */}
-                        <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#9ca3af' }}>
+                        <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#9ca3af', flexWrap: 'wrap' }}>
                           <span>🕐 {formatTime(slot.slot_time)}</span>
-                          {slot.business_address && <span>📍 {slot.business_address.split(',')[0]}</span>}
+                          {slot.business_address && (
+                            <span>📍 {slot.business_address.split(',')[0]}</span>
+                          )}
                           <span style={{ color: isUrgent ? '#ef4444' : '#9ca3af', fontWeight: isUrgent ? 600 : 400 }}>
                             {slot.spots_remaining === 1 ? '🔥 Last spot' : `${slot.spots_remaining} spots`} · {formatExpiry(mins)}
                           </span>
@@ -513,6 +529,7 @@ export default function BoardPage() {
 
                       {/* Right: price + actions */}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
+
                         {/* Discount badge */}
                         <span style={{
                           fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20,
@@ -535,30 +552,44 @@ export default function BoardPage() {
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        {/* Action buttons */}
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+
+                          {/* Share */}
+                          <button
+                            className="icon-btn"
+                            title="Copy share link"
+                            onClick={() => shareSlot(slot.id)}
+                          >
+                            {copyMsg === slot.id ? (
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+                                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            ) : (
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+                                <circle cx="18" cy="5" r="3" />
+                                <circle cx="6" cy="12" r="3" />
+                                <circle cx="18" cy="19" r="3" />
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                              </svg>
+                            )}
+                          </button>
+
                           {/* Heart */}
-                          <button className="heart-btn" onClick={() => toggleSave(slot.id)} title={isSaved ? 'Remove from saved' : 'Save'}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill={isSaved ? '#ef4444' : 'none'} stroke={isSaved ? '#ef4444' : '#9ca3af'} strokeWidth="2">
+                          <button
+                            className="icon-btn"
+                            onClick={() => toggleSave(slot.id)}
+                            title={isSaved ? 'Remove from saved' : 'Save'}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24"
+                              fill={isSaved ? '#ef4444' : 'none'}
+                              stroke={isSaved ? '#ef4444' : '#9ca3af'}
+                              strokeWidth="2"
+                            >
                               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                             </svg>
                           </button>
-                          {/* Share button */}
-<button
-  className="heart-btn"
-  title="Share this deal"
-  onClick={() => {
-    const url = `${window.location.origin}/board?slot=${slot.id}`
-    navigator.clipboard.writeText(url)
-    alert('Link copied! Share it with friends.')
-  }}
->
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
-    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-  </svg>
-</button>
 
                           {/* Claim */}
                           <button
@@ -566,9 +597,12 @@ export default function BoardPage() {
                             onClick={() => !isClaimed && handleClaim(slot.id)}
                             disabled={claimingId === slot.id || isClaimed}
                           >
-                            {isClaimed ? '✓ Claimed' : claimingId === slot.id ? '...' : 'Claim →'}
+                            {isClaimed ? '✓ Claimed'
+                              : claimingId === slot.id ? '...'
+                              : 'Claim →'}
                           </button>
                         </div>
+
                       </div>
                     </div>
                   </div>
@@ -586,11 +620,11 @@ export default function BoardPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 4 }}>What do you need?</label>
-                    <input name="service_name" required placeholder="e.g. Women's cut + color" className="input" />
+                    <input name="service_name" required placeholder="e.g. Women's cut + color" className="input" style={{ width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13 }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 4 }}>Category</label>
-                    <select name="category" className="input">
+                    <select name="category" style={{ width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13 }}>
                       {CATEGORIES.filter(c => c !== 'All').map(c => <option key={c}>{c}</option>)}
                     </select>
                   </div>
@@ -598,24 +632,29 @@ export default function BoardPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 4 }}>When</label>
-                    <select name="when_needed" className="input">
-                      <option>Today</option><option>Tomorrow</option><option>This week</option><option>Flexible</option>
+                    <select name="when_needed" style={{ width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13 }}>
+                      <option>Today</option>
+                      <option>Tomorrow</option>
+                      <option>This week</option>
+                      <option>Flexible</option>
                     </select>
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 4 }}>Budget ($)</label>
-                    <input name="budget" type="number" placeholder="50" className="input" />
+                    <input name="budget" type="number" placeholder="50" style={{ width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13 }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 4 }}>Within</label>
-                    <select name="radius_miles" className="input">
-                      <option value="2">2 miles</option><option value="5">5 miles</option><option value="10">10 miles</option>
+                    <select name="radius_miles" style={{ width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13 }}>
+                      <option value="2">2 miles</option>
+                      <option value="5">5 miles</option>
+                      <option value="10">10 miles</option>
                     </select>
                   </div>
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 4 }}>Your email</label>
-                  <input name="consumer_email" type="email" required placeholder="you@email.com" className="input" />
+                  <input name="consumer_email" type="email" required placeholder="you@email.com" style={{ width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13 }} />
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button type="submit" style={{ padding: '9px 20px', background: '#10b981', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
