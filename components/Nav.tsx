@@ -1,30 +1,35 @@
 import Link from 'next/link'
 
+function LogoMark({ size = 30 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <rect width="40" height="40" rx="10" fill="#00E676"/>
+      <rect x="8" y="10" width="24" height="3" rx="1.5" fill="#050505"/>
+      <rect x="8" y="17" width="15" height="3" rx="1.5" fill="#050505"/>
+      <rect x="8" y="24" width="19" height="3" rx="1.5" fill="#050505"/>
+      <circle cx="30" cy="30" r="7" fill="#050505"/>
+      <rect x="29" y="26" width="2" height="5" rx="1" fill="#00E676"/>
+      <rect x="29" y="32" width="2" height="2" rx="1" fill="#00E676"/>
+    </svg>
+  )
+}
+
 export default function Nav() {
   return (
-    <nav className="border-b border-gray-100 bg-white sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-emerald-600 rounded-md flex items-center justify-center">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2z"
-                stroke="white" strokeWidth="1.4" />
-              <path d="M8 5v6M5 8h6" stroke="white" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-          </div>
-          <span className="font-semibold text-gray-900">Open Slot</span>
+    <nav style={{ background: '#fff', borderBottom: '1px solid #f3f4f6', position: 'sticky', top: 0, zIndex: 50 }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <LogoMark size={30} />
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 16, color: '#111827' }}>Open Slot</span>
         </Link>
-
-        <div className="flex items-center gap-2">
-          <Link href="/board" className="btn-secondary text-xs px-3 py-1.5">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Link href="/board" style={{ fontFamily: "'Outfit', sans-serif", color: '#6b7280', fontSize: 14, textDecoration: 'none', padding: '0 8px' }}>
             Browse slots
           </Link>
-          <Link href="/apply" className="btn-primary text-xs px-3 py-1.5">
+          <Link href="/apply" style={{ background: '#10b981', color: 'white', fontFamily: "'Outfit', sans-serif", fontWeight: 600, padding: '8px 16px', borderRadius: 8, textDecoration: 'none', fontSize: 13 }}>
             Apply as a business
           </Link>
         </div>
-
       </div>
     </nav>
   )
