@@ -215,7 +215,7 @@ export default function Home() {
             <span style={{ color: '#fff', fontSize: 18, fontWeight: 700, letterSpacing: '-0.3px' }}>Open Slot</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Link href="/board" style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, textDecoration: 'none', padding: '0 8px' }}>Browse all</Link>
+            <Link href="/board" style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, textDecoration: 'none', padding: '0 8px' }}>Browse all (DEMO)</Link>
             <Link href="/apply" style={{ background: '#00E676', color: '#050505', fontFamily: 'Outfit, sans-serif', fontWeight: 700, padding: '9px 18px', borderRadius: 8, textDecoration: 'none', fontSize: 13 }}>
               List your business
             </Link>
