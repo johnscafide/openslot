@@ -334,7 +334,7 @@ export default function Home() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 0 }}>
             <div className="market-card">
-              <img src="https://unsplash.com/photos/center-city-philadelphia-skyline-4scOtKVO4OY?auto=format&fit=crop&w=800&q=80" alt="Philadelphia" />
+              <img src="images/phillyphoto.jpg" alt="Philadelphia" />
               <div className="market-card-overlay">
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,230,118,0.2)', border: '1px solid rgba(0,230,118,0.4)', borderRadius: 20, padding: '4px 12px', marginBottom: 10, width: 'fit-content' }}>
                   <span className="live-dot" />
@@ -347,7 +347,7 @@ export default function Home() {
             </div>
 
             <div className="market-card">
-              <img src="https://www.inquirer.com/resizer/v2/2UPR5RIUNFHFTFTAKAVDNQTDHE.jpg?auth=098c9c39757cb63fd6af45161ac0c4721c90d9383b50b078adbac4388a448a92&width=760&height=507&smart=true?auto=format&fit=crop&w=800&q=80" alt="South Jersey" />
+              <img src="images/southjersey.jpg" alt="South Jersey" />
               <div className="market-card-overlay">
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,230,118,0.2)', border: '1px solid rgba(0,230,118,0.4)', borderRadius: 20, padding: '4px 12px', marginBottom: 10, width: 'fit-content' }}>
                   <span className="live-dot" />
