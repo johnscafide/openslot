@@ -334,7 +334,7 @@ export default function Home() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 0 }}>
             <div className="market-card">
-              <img src="/board/phillyphoto.jpg" alt="Philadelphia" />
+              <img src="https://openslot-six.vercel.app/board/phillyphoto.jpg" alt="Philadelphia" />
               <div className="market-card-overlay">
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,230,118,0.2)', border: '1px solid rgba(0,230,118,0.4)', borderRadius: 20, padding: '4px 12px', marginBottom: 10, width: 'fit-content' }}>
                   <span className="live-dot" />
@@ -347,7 +347,7 @@ export default function Home() {
             </div>
 
             <div className="market-card">
-              <img src="/board/southjersey.jpg" alt="South Jersey" />
+              <img src="https://openslot-six.vercel.app/board/southjersey.jpg" alt="South Jersey" />
               <div className="market-card-overlay">
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,230,118,0.2)', border: '1px solid rgba(0,230,118,0.4)', borderRadius: 20, padding: '4px 12px', marginBottom: 10, width: 'fit-content' }}>
                   <span className="live-dot" />
